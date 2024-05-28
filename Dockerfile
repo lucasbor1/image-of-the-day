@@ -1,11 +1,17 @@
-# Estágio 1: Construir a aplicação
-FROM maven:3.8.1-openjdk-11-slim AS build
+# Estágio 1: Clonar o repositório do GitHub
+FROM alpine/git as clone
 WORKDIR /app
-COPY . /app
+RUN git clone https://github.com/lucasbor1/image-of-the-day.git .
+
+# Estágio 2: Construir a aplicação usando Maven
+FROM maven:3.6.0-jdk-11-slim AS build
+COPY --from=clone /app /app
+WORKDIR /app
 RUN mvn clean install
 
-# Estágio 2: Executar a aplicação
+# Estágio 3: Executar a aplicação
 FROM openjdk:11-jre-slim
+COPY --from=build /app/target/image-of-the-day.jar /app/
 WORKDIR /app
-COPY --from=build /app/target/my-app-1.0-SNAPSHOT.jar /app
-CMD ["java", "-jar", "/app/my-app-1.0-SNAPSHOT.jar"]
+EXPOSE 8080
+CMD ["java", "-jar", "image-of-the-day.jar"]
